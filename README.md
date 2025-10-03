@@ -1,3 +1,5 @@
-# Dossier Vercel skeleton
+# Dossier Vercel Ready
 
-Install deps and run `npm run dev`. Then fill env vars.
+1. `npm install`
+2. `npm run dev`
+3. Укажи переменные окружения (см. .env.example)
