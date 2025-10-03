@@ -36,57 +36,24 @@ import { Badge } from "@/components/ui/badge";
 const STORAGE_KEY = "dossiers_v1";
 const RUN_TESTS = true; // Render a small self-test panel at the bottom
 
-async function isTauri() {
-  // Tauri injects window.__TAURI__
-  return typeof window !== "undefined" && !!(window).__TAURI__;
-}
 
 function useLocalDossiers() {
   const [items, setItems] = useState(/** @type {Dossier[]} */([]));
   const loadedRef = useRef(false);
 
   useEffect(() => {
-    (async () => {
-      try {
-        if (await isTauri()) {
-          const { readTextFile, writeTextFile, createDir } = await import("@tauri-apps/api/fs");
-          const { appDataDir, join } = await import("@tauri-apps/api/path");
-          const base = await appDataDir();
-          const dir = await join(base, "dossier-manager");
-          const file = await join(dir, "dossiers.json");
-          try { await createDir(dir, { recursive: true }); } catch {}
-          try {
-            const raw = await readTextFile(file);
-            if (raw) setItems(JSON.parse(raw));
-          } catch {
-            // first run: create empty file
-            await writeTextFile(file, "[]");
-          }
-          // Persist hook will call this saver
-          const save = async (arr) => {
-            try { await writeTextFile(file, JSON.stringify(arr)); } catch {}
-          };
-          (window).___DO_SAVE = save;
-        } else {
-          const raw = localStorage.getItem(STORAGE_KEY);
-          if (raw) setItems(JSON.parse(raw));
-        }
-      } catch {}
-      loadedRef.current = true;
-    })();
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) setItems(JSON.parse(raw));
+    } catch {}
+    loadedRef.current = true;
   }, []);
 
   useEffect(() => {
     if (!loadedRef.current) return;
-    (async () => {
-      try {
-        if (await isTauri()) {
-          if ((window).___DO_SAVE) await (window).___DO_SAVE(items);
-        } else {
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
-        }
-      } catch {}
-    })();
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+    } catch {}
   }, [items]);
 
   return [items, setItems];
