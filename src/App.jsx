@@ -13,7 +13,7 @@ import { Badge } from "@/components/ui/badge"
 const TABS = [
   { key: "add", icon: Plus, label: "Добавить" },
   { key: "list", icon: Table2, label: "Список" },
-  { key: "photo", icon: Images, label: "Фото" },
+  
 ]
 
 function Field({ label, children }){
@@ -119,46 +119,14 @@ function AddForm({ onCreate }){
     <Card>
       <CardHeader><CardTitle>Новое досье</CardTitle></CardHeader>
       <CardContent className="space-y-4">
-        <div className="grid md:grid-cols-2 gap-4">
-          <Field label="Имя">
-            <Input value={full_name} onChange={(e)=>setFullName(e.target.value)} placeholder="Иван Иванов"/>
-          </Field>
-          <Field label="Связь со мной">
-            <Input value={relation} onChange={(e)=>setRelation(e.target.value)} placeholder="одноклассник, заказчик, ..."/>
-          </Field>
-          <Field label="Дружелюбие (1–5)">
-            <Select value={String(friendliness_level)} onValueChange={(v)=>setFriendliness(Number(v))}>
-              <SelectTrigger className="w-full"><SelectValue placeholder={String(friendliness_level)}/></SelectTrigger>
-              <SelectContent>
-                {[1,2,3,4,5].map(n => <SelectItem key={n} value={String(n)}>{n}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </Field>
-          <Field label="Теги (через запятую)">
-            <Input value={tags} onChange={(e)=>setTags(e.target.value)} placeholder="школа, дизайн, Kwork"/>
-          </Field>
-          <Field label="Дата последнего контакта">
-            <Input type="date" value={last_contact_date||''} onChange={(e)=>setLastContact(e.target.value)}/>
-          </Field>
-          <Field label="Фото (data URL)">
-            <Input value={photoDataUrl||''} onChange={(e)=>setPhoto(e.target.value)} placeholder="data:image/png;base64,..."/>
-          </Field>
-        </div>
-        <Field label="История / Как познакомились">
-          <Textarea rows={3} value={history} onChange={(e)=>setHistory(e.target.value)}/>
-        </Field>
-        <div className="grid md:grid-cols-2 gap-4">
-          <Field label="Травмы (чувствительное)">
-            <Textarea rows={3} value={traumas} onChange={(e)=>setTraumas(e.target.value)}/>
-          </Field>
-          <Field label="Важно помнить">
-            <Textarea rows={3} value={important_notes} onChange={(e)=>setImportant(e.target.value)}/>
-          </Field>
-        </div>
-        <div className="flex gap-3">
-          <Button onClick={submit}><Save className="h-4 w-4 mr-2"/>Сохранить</Button>
-        </div>
-      </CardContent>
+                  <div className="flex items-center gap-2">
+                    <Search className="h-4 w-4 opacity-60"/>
+                    <Input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Поиск по имени"/>
+                  </div>
+                  {filtered.length ? (
+                    <GridCards items={filtered} onRemove={remove} onEdit={startEdit}/>
+                  ) : <div className="text-sm text-gray-500">Ничего не найдено.</div>}
+                </CardContent>
     </Card>
   )
 }
@@ -246,26 +214,16 @@ function PhotoWall({ items, onRemove, onEdit }){
 export default function App(){
   const { items, create, remove, update, backend } = usePeople()
   const [tab, setTab] = useState("add")
-  const [mode, setMode] = useState("grid")
-  const [query, setQuery] = useState("")
-  const [minFriend, setMinFriend] = useState(0)
-  const [hasPhoto, setHasPhoto] = useState(false)
-  const [sortBy, setSortBy] = useState("updated_desc")
+    const [query, setQuery] = useState("")
 
   const filtered = useMemo(()=>{
-    let list = [...items]
-    const q = query.trim().toLowerCase()
+    let list = [...items];
+    const q = query.trim().toLowerCase();
     if (q){
-      list = list.filter(it => (it.full_name||'').toLowerCase().includes(q) || (it.relation||'').toLowerCase().includes(q) || (it.tags||[]).some(t => t.toLowerCase().includes(q)))
+      list = list.filter(it => (it.full_name||'').toLowerCase().includes(q));
     }
-    if (minFriend>0){
-      list = list.filter(it => Number(it.friendliness_level||0) >= minFriend)
-    }
-    if (hasPhoto){
-      list = list.filter(it => !!it.photoDataUrl)
-    }
-    switch (sortBy){
-      case "name_asc": list.sort((a,b)=> (a.full_name||'').localeCompare(b.full_name||'')); break
+    return list;
+  }, [items, query]); break
       case "name_desc": list.sort((a,b)=> (b.full_name||'').localeCompare(a.full_name||'')); break
       case "updated_desc": list.sort((a,b)=> new Date(b.updated_at||0) - new Date(a.updated_at||0)); break
       case "friend_desc": list.sort((a,b)=> Number(b.friendliness_level||0) - Number(a.friendliness_level||0)); break
@@ -345,9 +303,7 @@ export default function App(){
                     </div>
                   </div>
                   {filtered.length ? (
-                    mode === 'grid' ? <GridCards items={filtered} onRemove={remove} onEdit={startEdit}/> :
-                    mode === 'list' ? <TableList items={filtered} onRemove={remove} onEdit={startEdit}/> :
-                    <PhotoWall items={filtered} onRemove={remove} onEdit={startEdit}/>
+                                                            <PhotoWall items={filtered} onRemove={remove} onEdit={startEdit}/>
                   ) : <div className="text-sm text-gray-500">Ничего не найдено. Измени фильтры или добавь новые досье.</div>}
                 </CardContent>
               </Card>
